@@ -2,72 +2,67 @@ import bs4
 import json
 import os
 import requests
-import tqdm
+from tqdm import tqdm
+from urllib.parse import urljoin
 
 
-# bs4.BeautifulSoup
-#####################
-# get the files
-files = []
-
-with os.scandir('./DownloadERIC_2024/ids') as entries:
-    for entry in entries:
-        files.append(entry.path)
+# Hello! Thank you so much for helping.
+# Please edit the 
 
 
-#####################
-# Pull the IDs out
+start_index = 0
+end_index = -1
+
+files = [
+    entry.path
+    for entry in os.scandir('./DownloadERIC_2024/ids')
+    if entry.is_file()
+]
 ids = []
 for file in files:
-    filedata = json.loads(open(file, 'r').read())
-    for identifier in filedata["response"]["docs"]:
-        ids.append(identifier["id"])
+    with open(file) as f:
+        data = json.load(f)
+        ids.extend(doc["id"] for doc in data["response"]["docs"])
 
-#####################
-# Append to make URLs
-urls = []
+base_url = "https://eric.ed.gov/?id={}"
+urls = [base_url.format(id) for id in ids]
 
-for identifier in ids:
-    urls.append(f"https://eric.ed.gov/?id={identifier}")
-
-outputURLs = []
-
-
-
-i = 0
+with requests.Session() as session, open("ERIC_2024_2025_urls.txt", "a") as f:
+    session.headers.update({'User-Agent': 'Mozilla/5.0'})
     
-f = open("ERIC_2024_2025_urls.txt", "a")
-for url in tqdm.tqdm(urls[:2000]):
-    try:
-        soup = bs4.BeautifulSoup(requests.get(url, timeout=200).content, 'html.parser').find("div", {"class":"r_f"})
-        outputURLs.append(soup.find("a")["title"])
-    except:
+    for url in tqdm(urls[start_index:end_index], desc="Processing URLs"):
         try:
-            outputURLs.append(soup.find("a")["href"])
-        except:
-            pass # don't try this at home
-    f.write(outputURLs[-1] + '\n')
-    
-#################################
-# This is the PDF download code
-# It doesn't work correctly just yet
-# Download the URLs if you can!
-#################################
-    
-# for url in outputURLs:
-#     soup = bs4.BeautifulSoup(requests.get(url,timeout=200), 'html.parser')
-#     links = soup.find_all('a')
-#     for link in tqdm.tqdm(links):
-#         if ('.pdf' in link.get('href', [])):
-#             i += 1
-#             print("Downloading file: ", i)
-
-#             # Get response object for link
-#             response = requests.get(link.get('href'), timeout=200)
-
-#             # Write content in pdf file
-#             pdf = open("pdf"+str(i)+".pdf", 'a')
-#             pdf.write(response.content)
-#             pdf.close()
-#             print("File ", i, " downloaded")
-# f.close()
+            response = session.get(url, timeout=10)
+            response.raise_for_status()
+            
+            soup = bs4.BeautifulSoup(response.content, 'html.parser')
+            if (div_rf := soup.find("div", class_="r_f")) and (a_tag := div_rf.find("a")):
+                link = a_tag.get("title") or a_tag.get("href")
+                if link:
+                    f.write(f"{link}\n")
+                    
+            # Check and download PDF
+                if link.lower().endswith('.pdf'):
+                    current_id = url.split('=')[-1]
+                    
+                    try:
+                        pdf_response = session.get(link, timeout=15, stream=True)
+                        pdf_response.raise_for_status()
+                        
+                        # Create complete file path
+                        pdf_path = os.path.join('./pdfs', f'{current_id}.pdf')
+                        
+                        # Ensure directory structure exists
+                        os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+                        
+                        with open(pdf_path, 'wb') as pdf_file:
+                            for chunk in pdf_response.iter_content(chunk_size=8192):
+                                pdf_file.write(chunk)
+                    
+                        
+                    except Exception as pdf_error:
+                        print(f"PDF Download Error ({current_id}): {str(pdf_error)[:100]}")
+        
+            
+        except (requests.RequestException, AttributeError) as e:
+            continue
