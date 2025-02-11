@@ -37,13 +37,15 @@ outputURLs = []
 i = 0
     
 f = open("ERIC_2024_2025_urls.txt", "a")
-for url in tqdm.tqdm(urls):
+for url in tqdm.tqdm(urls[:2000]):
     try:
         soup = bs4.BeautifulSoup(requests.get(url, timeout=200).content, 'html.parser').find("div", {"class":"r_f"})
         outputURLs.append(soup.find("a")["title"])
     except:
-        outputURLs.append(soup.find("a")["href"])
-    
+        try:
+            outputURLs.append(soup.find("a")["href"])
+        except:
+            pass # don't try this at home
     f.write(outputURLs[-1] + '\n')
     
 #################################
