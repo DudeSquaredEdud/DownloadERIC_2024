@@ -7,7 +7,6 @@ from urllib.parse import urljoin
 
 
 # Hello! Thank you so much for helping.
-# Please edit the 
 
 
 start_index = 0
@@ -15,7 +14,7 @@ end_index = -1
 
 files = [
     entry.path
-    for entry in os.scandir('./DownloadERIC_2024/ids')
+    for entry in os.scandir('./DownloadERIC_2024/ids/2024-2025')
     if entry.is_file()
 ]
 ids = []
