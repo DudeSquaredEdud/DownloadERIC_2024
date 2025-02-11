@@ -52,20 +52,20 @@ for url in tqdm.tqdm(urls):
 # Download the URLs if you can!
 #################################
     
-for url in outputURLs:
-    soup = bs4.BeautifulSoup(requests.get(url,timeout=200), 'html.parser')
-    links = soup.find_all('a')
-    for link in tqdm.tqdm(links):
-        if ('.pdf' in link.get('href', [])):
-            i += 1
-            print("Downloading file: ", i)
+# for url in outputURLs:
+#     soup = bs4.BeautifulSoup(requests.get(url,timeout=200), 'html.parser')
+#     links = soup.find_all('a')
+#     for link in tqdm.tqdm(links):
+#         if ('.pdf' in link.get('href', [])):
+#             i += 1
+#             print("Downloading file: ", i)
 
-            # Get response object for link
-            response = requests.get(link.get('href'), timeout=200)
+#             # Get response object for link
+#             response = requests.get(link.get('href'), timeout=200)
 
-            # Write content in pdf file
-            pdf = open("pdf"+str(i)+".pdf", 'a')
-            pdf.write(response.content)
-            pdf.close()
-            print("File ", i, " downloaded")
-f.close()
+#             # Write content in pdf file
+#             pdf = open("pdf"+str(i)+".pdf", 'a')
+#             pdf.write(response.content)
+#             pdf.close()
+#             print("File ", i, " downloaded")
+# f.close()
