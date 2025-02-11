@@ -14,17 +14,20 @@ end_index = -1
 
 files = [
     entry.path
-    for entry in os.scandir('./DownloadERIC_2024/ids/2024-2025')
+    for entry in os.scandir('./DownloadERIC_2024/ids/ERIC_hosted')
     if entry.is_file()
 ]
-ids = []
+ids = [[], []]
 for file in files:
     with open(file) as f:
         data = json.load(f)
-        ids.extend(doc["id"] for doc in data["response"]["docs"])
+        ids[0].extend(doc["id"] for doc in data["response"]["docs"])
+        ids[1].extend(doc["title"] for doc in data["response"]["docs"])
 
 base_url = "https://eric.ed.gov/?id={}"
-urls = [base_url.format(id) for id in ids]
+urls = [base_url.format(id) for id in ids[0]]
+
+print(len(urls))
 
 with requests.Session() as session, open("ERIC_2024_2025_urls.txt", "a") as f:
     session.headers.update({'User-Agent': 'Mozilla/5.0'})
