@@ -25,7 +25,7 @@ for file in files:
         ids[1].extend(doc["title"] for doc in data["response"]["docs"])
 
 base_url = "https://eric.ed.gov/?id={}"
-urls = [base_url.format(id) for id in ids[0]]
+urls = [base_url.format(id) for id in ids[0][24459:]]
 
 print(len(urls))
 
@@ -40,8 +40,6 @@ with requests.Session() as session, open("ERIC_2024_2025_urls.txt", "a") as f:
             soup = bs4.BeautifulSoup(response.content, 'html.parser')
             if (div_rf := soup.find("div", class_="r_f")) and (a_tag := div_rf.find("a")):
                 link = a_tag.get("title") or a_tag.get("href")
-                if link:
-                    f.write(f"{link}\n")
                     
             # Check and download PDF
                 if link.lower().endswith('.pdf'):
